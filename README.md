@@ -1,132 +1,123 @@
-# Airbnb-Price-Prediction
-Airbnb Price Prediction – Technical Report
-Objective
 
-The goal of this task was to predict the price of Airbnb listings based on a structured dataset. The project involved exploratory data analysis, preprocessing, modeling with deep neural networks, and ensemble learning techniques. 
-Step 1: Exploratory Data Analysis (EDA)
+# 🏡 Airbnb Price Prediction
 
-The first step was to inspect the dataset to understand the types of features, identify potential missing values, detect anomalies, and gauge feature distributions.
+## 🚀 Overview
+This repository contains a complete machine learning pipeline to predict Airbnb listing prices using structured features. It includes thorough exploratory data analysis (EDA), preprocessing, neural network modeling, ensemble learning, and advanced meta-modeling techniques.
 
-Key decisions and insights:
-- Parsed the `features` column to extract numerical data such as `bedrooms`, `beds`, `guests`, `bathrooms`.
-- Visualized the distribution of the `price` variable and found it was heavily right-skewed. Decided to apply a log transform later.
-- Checked `rating`, `reviews`, and room counts for extreme outliers.
-- Analyzed the relationship between categorical variables (like `country`) and price using boxplots and group means.
+---
 
-Step 2: Data Cleaning & Preprocessing
+## 📊 Dataset Summary
+The dataset includes:
+- Listing details: `id`, `name`, `rating`, `reviews`
+- Host info: `host_name`, `host_id`
+- Location: `address`, `country`
+- Listing features: `bedrooms`, `bathrooms`, `guests`, `beds`, `studios`, `toilets`
+- Amenities, `checkin`, `checkout`
+- Target: `price`
 
-We needed to ensure the data was clean and suitable for machine learning models.
+---
 
-Steps taken and reasoning:
-- Missing values in `checkin`, `checkout`, and `host_name` were filled using the mode since these are likely to be repeated strings.
-- Numerical missing values (like `beds`, `guests`, `bathrooms`) were filled using the median to prevent skewing due to outliers.
-- Applied `np.log1p()` to skewed features (`reviews`, `guests`, `beds`, etc.) to normalize their distributions and improve learning for ANN.
-- Used `RobustScaler` to scale numerical features because it is less sensitive to outliers than `StandardScaler`.
-- One-hot encoded the `country` feature to allow categorical learning for both tree-based and neural models.
+## 📌 Workflow
 
-Step 3: ANN Model Development
+### 1. Exploratory Data Analysis (EDA)
+- Parsed and separated `features` into usable numerical fields.
+- Visualized `price` distribution (found to be right-skewed).
+- Identified and treated missing values.
+- Visualized relationships between categorical features (`country`) and `price`.
 
-The next step was to build a deep learning model using Keras.
+### 2. Data Cleaning & Preprocessing
+- Filled missing values (mode/median).
+- Applied `log1p()` to normalize skewed columns.
+- Scaled numerical features with `RobustScaler`.
+- One-hot encoded the `country` column.
 
-Architecture decisions:
-- Used 5 dense layers (512 → 256 → 128 → 64 → 32 → 1) to allow the network to capture high-dimensional relationships.
-- Applied `BatchNormalization` after each dense layer to stabilize learning and allow higher learning rates.
-- Used `Dropout` for regularization to prevent overfitting, especially given limited data.
-- Chose `Adam` optimizer with a learning rate of 0.0003 for efficient gradient updates.
-- Used `EarlyStopping` to stop training when validation loss didn’t improve and `ReduceLROnPlateau` to dynamically lower learning rate.
+### 3. ANN Model Creation
+A deep ANN was created using Keras with:
+- Layer configuration: 512 → 256 → 128 → 64 → 32 → Output
+- Regularization with `Dropout` and `BatchNormalization`
+- `Adam` optimizer with learning rate 0.0003
+- EarlyStopping + ReduceLROnPlateau
 
-Performance:
+📈 **Deep ANN Performance**:
 - MAE: 3730.03
 - RMSE: 5063.66
 - R² Score: 0.4193
 
-This baseline ANN showed promise but needed further improvements. The evaluation was done with Mean Absolute Error, Root Mean Squared Error, Co-efficient of determination (R square) as this is a Regression Task. 
+---
 
-Step 4: Accuracy Improvement
+## 🔧 Hyperparameter Tuning
 
-To improve generalization and performance, multiple strategies were applied.
+### Attempt 1:
+- Shallow ANN (256 → 128 → 64) with Dropout
+- Learning rate: 0.0005
 
-4.1 Hyper Parameter Tuning
-To improve the performance of the base ANN model, I conducted multiple rounds of architectural and training-related hyperparameter tuning. Below are the experiments and the rationale behind each design choice:
-Attempt 1:
-Decisions & Reasoning:
-•	Layer sizes: 256 → 128 → 64 — this is a standard decreasing pattern to compress features progressively.
-•	Dropout: Introduced dropout to reduce overfitting, especially on the larger layers.
-•	Learning rate: Set to 0.0005, slightly higher than default to allow faster convergence in early epochs.
-•	Patience: Early stopping with patience=10 to avoid unnecessary training.
-Outcome:
-•	Performance improved moderately but plateaued, indicating room for deeper architecture and dynamic learning rate scheduling.
-Performance:
--	MAE: 3744.77
--	RMSE: 5021.75
--	R² Score: 0.4289
-Attempt 2:
-Decisions & Reasoning:
-•	Deeper network: Added more layers and units (up to 512) to allow the model to learn more abstract, high-dimensional patterns in the data.
-•	Batch Normalization: Placed after each hidden layer to stabilize and speed up training by normalizing activations.
-•	Dropout rates: Carefully decreased as depth increased (0.5 → 0.4 → 0.3 → 0.2) to balance regularization and learning capacity.
-•	Learning rate: Lowered to 0.0003 to allow fine-tuning in deeper networks.
-•	ReduceLROnPlateau: Dynamically reduced learning rate when validation loss plateaued to escape shallow local minima.
-•	EarlyStopping: Patience of 12 epochs was used to preserve the best-performing model weights.
-Outcome:
-•	This configuration outperformed all previous ANN models.
-•	It was later chosen as the base ANN to combine with ensemble models in the final stacked architecture.
-Deep ANN Performance:
--	MAE: 3730.03
--	RMSE: 5063.66
--	R² Score: 0.4193
+📉 Performance:
+- MAE: 3744.77
+- RMSE: 5021.75
+- R²: 0.4289
 
-4.2 Cross-Validation
+### Attempt 2 (Best):
+- Deep ANN with Dropout and BatchNorm
+- Learning rate: 0.0003 + scheduler
+- EarlyStopping patience: 12
 
-5-Fold cross-validation was used to evaluate the model’s generalizability.
-- Avoided over-relying on a single train/test split.
-- Helped evaluate how consistent the ANN is across data subsets.
+📈 Performance:
+- MAE: 3730.03
+- RMSE: 5063.66
+- R²: 0.4193
 
-Result:
-- Average MAE: 3715.96
-- Average RMSE: 5102.25
-- Average R² Score: 0.4177
+---
 
-4.3 Tree-Based Models
+## 🧪 Accuracy Improvement Techniques
 
-I trained multiple tree-based models using raw + encoded data.
+### ✅ Cross-Validation (5-Fold)
+- MAE: 3715.96
+- RMSE: 5102.25
+- R²: 0.4177
 
-Model decisions and performance:
-- Random Forest: Chosen for its ability to handle non-linearities and categorical splits.
-  - MAE: 3830.56, RMSE: 5145.10, R²: 0.4005
+### ✅ Tree-Based Models
+| Model                  | MAE    | RMSE    | R² Score |
+|------------------------|--------|---------|----------|
+| Random Forest          | 3830.56| 5145.10 | 0.4005   |
+| Gradient Boosting      | 3713.65| 5077.34 | 0.4161   |
+| HistGradientBoosting   | 3675.56| 4970.70 | 0.4404   |
+| Stacked Regressor      | 3594.24| 4875.47 | 0.4617   |
 
-- Gradient Boosting: Chosen for sequential learning and better bias reduction.
-  - MAE: 3713.65, RMSE: 5077.34, R²: 0.4161
+### ✅ Final Combined Model (Meta-Ensemble)
+Combined ANN, Random Forest, Gradient Boosting, and HGB using a Neural Network as a meta-learner.
 
-- HistGradientBoosting: Selected for fast training and histogram-based splitting.
-  - MAE: 3675.56, RMSE: 4970.70, R²: 0.4404
-
-- Stacked Regressor: Combined multiple base learners + MLPRegressor with Ridge as final estimator.
-  - MAE: 3594.24, RMSE: 4875.47, R²: 0.4617
-
-4.4 Final Combined Model (ANN + HGB + RF + GB)
-
-To further enhance accuracy, I performed meta-modeling by combining predictions from:
-- ANN
-- Random Forest
-- Gradient Boosting
-- HistGradientBoosting
-
-Decision: Use `Neural Network` as a meta-learner to optimally blend predictions (stacked generalization).
-This approach was selected because it is interpretable, fast, and often performs well in ensemble tasks.
-
-Final Results:
+📈 **Final Performance**:
 - MAE: 3527.32
 - RMSE: 4850.01
-- R² Score: 0.4673 (best achieved)
-I tried with Linear Regression, RidgeCV, Optimized weight average as well. But the neural network used as meta-modelling gave best result.
+- R²: 0.4673 ✅
 
+> Note: RidgeCV, Linear Regression, and optimized weighted averaging were also tested, but the meta-model neural network gave the best performance.
 
-Conclusion
+---
 
-This project reflects a complete machine learning pipeline from EDA to advanced ensemble modeling. Each modeling decision—from log transforms to dropout layers to stacking—was made based on data properties and validation outcomes. The final blended model provided the best performance and balanced bias-variance tradeoff effectively.
+## 📐 Evaluation Metrics
 
-Tools & Libraries Used
-• Python (pandas, numpy, matplotlib, seaborn)
-• Scikit-learn (RandomForest, GradientBoosting, stacking, metrics)
-• TensorFlow/Keras (for building ANN)
+- **MAE (Mean Absolute Error)**: Measures average magnitude of error (lower is better).
+- **RMSE (Root Mean Squared Error)**: Penalizes larger errors (lower is better).
+- **R² Score (Coefficient of Determination)**: Proportion of variance explained (higher is better).
+
+---
+
+## 🛠️ Tools & Libraries
+- Python, pandas, numpy, matplotlib, seaborn
+- scikit-learn (RandomForest, GradientBoosting, stacking, metrics)
+- TensorFlow / Keras
+
+---
+
+## 📂 Structure
+- `Airbnb_Price_Prediction.ipynb`: Main notebook with code and plots
+- `Airbnb_Price_Prediction_Explanation.docx`: Detailed project explanation
+- `README.md`: This file
+
+---
+
+## ✅ Status
+📌 Completed and submitted as part of the SparkTech AI Developer Interview Task.
+
+---
